@@ -46,7 +46,8 @@ namespace ParkingLotMangamentSystem.Controllers.ParkingControllers
         [Route("Unpark")]
         public IActionResult UnParkVehicle(int parkingId)
         {
-            bool unparkDetails = this.parkingManager.UnParkVehicle(parkingId);
+            int userId = TokenUserId();
+            bool unparkDetails = this.parkingManager.UnParkVehicle(parkingId,userId);
             if(unparkDetails)
             {
                 return this.Ok(new { status = "True", message = "Vehicle Unparked succesfully", data = unparkDetails });

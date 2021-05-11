@@ -38,9 +38,13 @@ namespace ParkingLotRL.Repository
                 else
                     return false;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new Exception(e.Message);
+            }
+            finally
+            {
+                oracleConnection.Close();
             }
         }
 
@@ -60,9 +64,14 @@ namespace ParkingLotRL.Repository
                     emptySlots.Add(reader.GetInt32(1));
                 }
                 return emptySlots;
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 throw new Exception(e.Message);
+            }
+            finally
+            {
+                oracleConnection.Close();
             }
         }
 
@@ -84,8 +93,9 @@ namespace ParkingLotRL.Repository
                 oracleConnection.Close();
                 if (rowAffected != 0) { return parking; }
                 else return null;
-                
-            }catch(Exception e)
+
+            }
+            catch (Exception e)
             {
                 throw new Exception(e.Message);
             }
@@ -95,38 +105,43 @@ namespace ParkingLotRL.Repository
             }
         }
 
-        public Parking SearchVehicleByVehicleNumber(string vehicleNumber)
+        public ParkingResponse SearchVehicleByVehicleNumber(string vehicleNumber)
         {
             try
             {
-                Parking parking = new Parking();
+                ParkingResponse parkingResponse = new ParkingResponse();
                 connection();
                 OracleCommand com = new OracleCommand("sp_searchVehicleByNumber", this.oracleConnection);
                 com.CommandType = CommandType.StoredProcedure;
-                com.Parameters.Add("@VehicleNumber", parking.VehicleNumber);
+                com.Parameters.Add("@vehicle_number", vehicleNumber);
                 com.Parameters.Add("Cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
                 com.ExecuteNonQuery();
                 OracleDataReader reader = com.ExecuteReader();
                 while (reader.Read())
                 {
-                    parking.ParkingId = reader.GetInt32(0);
-                    parking.VehicleNumber = reader.GetString(8);
-                    parking.EntryTime = reader.GetString(1);
-                    parking.ParkingType = reader.GetInt32(2);
-                    parking.VehicleType = reader.GetInt32(3);
-                    parking.UserId = reader.GetInt32(4);
-                    parking.ParkingSlot = reader.GetInt32(5);
-                    parking.IsDisabled = reader.GetChar(6);
-                    parking.ExitTime = reader.GetString(7);
+                    parkingResponse.ParkingId= reader.GetInt32(0);
+                    parkingResponse.UserId = reader.GetInt32(1);
+                    parkingResponse.VehicleNumber = reader.GetString(2);
+                    parkingResponse.ParkingType = reader.GetString(3);
+                    parkingResponse.RoleType = reader.GetString(4);
+                    parkingResponse.NoOfWheels = reader.GetInt32(5);
+                    parkingResponse.UserEmail = reader.GetString(6);
+                    parkingResponse.EntryTime = reader.GetString(7);
+                    
                 }
-                return parking;
-            }catch(Exception e)
+                return parkingResponse;
+            }
+            catch (Exception e)
             {
                 throw new Exception(e.Message);
             }
+            finally
+            {
+                oracleConnection.Close();
+            }
         }
 
-        public bool UnParkVehicle(int parkingId)
+        public bool UnParkVehicle(int parkingId, int userId)
         {
             try
             {
@@ -135,15 +150,17 @@ namespace ParkingLotRL.Repository
                 OracleCommand com = new OracleCommand("sp_UnparkVehicle", this.oracleConnection);
                 com.CommandType = CommandType.StoredProcedure;
                 com.Parameters.Add("@parking_number", parkingId);
+                com.Parameters.Add("@user_id", userId);
                 oracleConnection.Open();
                 int rowAffected = com.ExecuteNonQuery();
                 if (rowAffected != 0)
                     return true;
                 else
                     return false;
-            }catch(Exception e)
+            }
+            catch (Exception)
             {
-                throw new Exception(e.Message);
+                throw new Exception(message: "Incorrect user_id");
             }
             finally
             {
@@ -151,9 +168,41 @@ namespace ParkingLotRL.Repository
             }
         }
 
-        public Parking GetAllParkingVehicles()
+        public List<ParkingResponse> GetAllParkedVehicles()
         {
-            throw new NotImplementedException();
+            try
+            {
+                connection();
+                List<ParkingResponse> parkingList = new List<ParkingResponse>();
+                OracleCommand com = new OracleCommand("sp_UnparkVehicle", this.oracleConnection);
+                com.CommandType = CommandType.StoredProcedure;
+                com.Parameters.Add("Cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+                OracleDataAdapter adapter = new OracleDataAdapter(com);
+                DataTable table = new DataTable();
+                oracleConnection.Open();
+                adapter.Fill(table);
+                oracleConnection.Close();
+                foreach (DataRow row in table.Rows)
+                {
+                    parkingList.Add(
+                        new ParkingResponse
+                        {
+                            ParkingId = Convert.ToInt32(row["parking_id"]),
+                            UserId = Convert.ToInt32(row["user_id"]),
+                            VehicleNumber = Convert.ToString(row["vehiclenumber"]),
+                            ParkingType = Convert.ToString(row["type"]),
+                            RoleType = Convert.ToString(row["roles"]),
+                            NoOfWheels = Convert.ToInt32(row["wheels"]),
+                            UserEmail = Convert.ToString(row["email"]),
+                            EntryTime = Convert.ToString(row["entry_time"])
+                        }
+                        );
+                }
+                return parkingList;
+            }catch(Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
     }
 }

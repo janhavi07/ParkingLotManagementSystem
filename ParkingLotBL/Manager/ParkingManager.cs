@@ -26,6 +26,19 @@ namespace ParkingLotBL.Manager
             }
         }
 
+        public List<ParkingResponse> GetAllParkedVehicles()
+        {
+            try
+            {
+                return this.parkingRepository.GetAllParkedVehicles();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+
+        }
+
         public List<int> GetEmptySlots()
         {
             try
@@ -50,7 +63,7 @@ namespace ParkingLotBL.Manager
             }
         }
 
-        public Parking SearchVehicleByVehicleNumber(string vehicleNumber)
+        public ParkingResponse SearchVehicleByVehicleNumber(string vehicleNumber)
         {
             try
             {
@@ -62,11 +75,11 @@ namespace ParkingLotBL.Manager
             }
         }
 
-        public bool UnParkVehicle(int parkingId)
+        public bool UnParkVehicle(int parkingId,int userId)
         {
             try
             {
-                return this.parkingRepository.UnParkVehicle(parkingId);
+                return this.parkingRepository.UnParkVehicle(parkingId,userId);
             }
             catch (Exception e)
             {

@@ -9,12 +9,12 @@ namespace ParkingLotRL.IRepository
     public interface IParkingRepository
     {
         Parking ParkVehicle(Parking parking);
-        bool UnParkVehicle(int parkingId);
+        bool UnParkVehicle(int parkingId,int userId);
         List<int> GetEmptySlots();
         bool DeleteEmptySlot();
-        Parking SearchVehicleByVehicleNumber(string vehicleNumber);
-        Parking GetAllParkingVehicles();
-        
+        ParkingResponse SearchVehicleByVehicleNumber(string vehicleNumber);
+        List<ParkingResponse> GetAllParkedVehicles();
+
     }
 
 }
