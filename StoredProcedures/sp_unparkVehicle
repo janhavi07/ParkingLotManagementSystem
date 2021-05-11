@@ -1,0 +1,41 @@
+--------------------------------------------------------
+--  File created - Wednesday-May-12-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_UNPARKVEHICLE
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_UNPARKVEHICLE" (
+parking_number in parkingtable.parking_id%type,
+user_id in userdata.userid%type)
+is
+no_such_parking exception;
+if_exists number(1);
+id userdata.userid%type;
+begin
+select case when exists(select parking_id from parkingtable where parking_id=parking_number AND parkingtable.user_id=user_id)
+then 1 else 0 end into if_exists from dual;
+
+if(if_exists=0)then
+raise no_such_parking;
+end if;
+for c in(select parking_id,user_id from parkingtable where parkingtable.parking_id=parking_number)loop
+if(c.user_id=user_id)then
+update ParkingTable
+set exit_time = SYSTIMESTAMP,
+is_disabled='F';
+else
+raise no_such_parking;
+end if;
+end loop;
+exception
+when no_such_parking then
+RAISE_APPLICATION_ERROR(-20001,'Could Not park');
+end;
+
+/* begin
+sp_unparkvehicle(8);
+end;*/
+
+/

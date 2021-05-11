@@ -1,0 +1,20 @@
+--------------------------------------------------------
+--  File created - Wednesday-May-12-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_DELETEUNPARKVEHICLE
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_DELETEUNPARKVEHICLE" 
+is
+begin
+delete from parkingtable where 
+parkingtable.is_disabled='F';
+end;
+
+/* begin 
+sp_deleteUnparkVehicle;
+end;*/
+
+/

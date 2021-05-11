@@ -1,0 +1,32 @@
+--------------------------------------------------------
+--  File created - Wednesday-May-12-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_REGISTER
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_REGISTER" (
+user_email userdata.email%type,
+user_pass userdata.password%type,
+role_id userdata.roleid%type)
+is
+row_exist NUMBER;
+begin
+select count(*)
+into row_exist
+from UserData
+where email=user_email;
+DBMS_OUTPUT.PUT_LINE(row_exist);
+if row_exist=0
+then
+insert into userdata(email,password,roleId) VALUES(user_email,user_pass,role_id);
+else
+ DBMS_OUTPUT.PUT_LINE('User already exists');
+end if;
+EXCEPTION
+WHEN OTHERS then
+ROLLBACK;
+end;
+
+/

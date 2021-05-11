@@ -1,0 +1,29 @@
+--------------------------------------------------------
+--  File created - Wednesday-May-12-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_PARKVEHICLE
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_PARKVEHICLE" (
+vehicle_number in parkingtable.vehiclenumber%type,
+parking_type in parkingtype.id%type,
+vehicle_type in vehicle.id%type,
+user_id in userdata.userid%type,
+parking_slot in NUMBER,
+is_disabled in parkingtable.is_disabled%type)
+is
+begin
+insert into parkingtable(VehicleNumber,entry_time,parking_type,vehicle_type,user_id,parking_slots,is_disabled,exit_time)
+values(vehicle_number,SYSTIMESTAMP,parking_type,vehicle_type,user_id,parking_slot,is_disabled,null);
+exception
+when others then
+rollback;
+end;
+
+/*begin
+sp_parkvehicle("MH09BF1234",1,1,121,3,'True');
+end;*/
+
+/

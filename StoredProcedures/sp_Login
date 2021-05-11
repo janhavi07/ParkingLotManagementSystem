@@ -1,0 +1,32 @@
+--------------------------------------------------------
+--  File created - Wednesday-May-12-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_LOGIN
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_LOGIN" (
+user_email in userdata.email%type,
+user_pass in userdata.password%type,
+CS OUT SYS_REFCURSOR)
+is
+not_registered exception;
+exist int;
+begin
+select count(*) into exist from userdata where userdata.email=user_email;
+if(exist=0)then
+raise not_registered;
+else
+open cs for 
+SELECT userdata.userid,userdata.password,role.roles from userdata
+inner join role on 
+userdata.roleid = role.roleid
+where userdata.email=user_email;
+end if;
+EXCEPTION
+WHEN not_registered THEN
+dbms_output.put_line(user_email ||' : This user is not registered');
+end;
+
+/

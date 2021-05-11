@@ -1,0 +1,35 @@
+--------------------------------------------------------
+--  File created - Wednesday-May-12-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_SEARCHVEHICLEBYNUMBER
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_SEARCHVEHICLEBYNUMBER" 
+(vehicle_number in parkingtable.vehiclenumber%type,
+CS OUT SYS_REFCURSOR)
+is
+begin
+open cs for
+select parkingtable.parking_id,parkingtable.user_id,parkingtable.vehiclenumber,parkingtype.type,role.roles,vehicle.wheels,userdata.email,parkingtable.entry_time
+from parkingtable
+inner join vehicle on
+vehicle.id=parkingtable.vehicle_type
+inner join userdata on
+userdata.userid=parkingtable.user_id
+inner join role on
+role.roleid=userdata.roleid
+inner join parkingtype on
+parkingtype.id=parkingtable.parking_type
+where
+parkingtable.vehiclenumber =vehicle_number;
+end;
+
+
+/* var parking refcursor;
+exec sp_searchVehicleByNumber('MH02CE1236', :parking );
+print :parking
+*/
+
+/
