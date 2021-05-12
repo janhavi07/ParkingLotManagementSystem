@@ -39,7 +39,7 @@ namespace ParkingLotBL.Manager
 
         }
 
-        public List<int> GetEmptySlots()
+        public List<Slot> GetEmptySlots()
         {
             try
             {
@@ -51,7 +51,7 @@ namespace ParkingLotBL.Manager
             }
         }
 
-        public Parking ParkVehicle(Parking parking)
+        public ParkingResponse ParkVehicle(Parking parking)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace ParkingLotBL.Manager
             }
         }
 
-        public bool UnParkVehicle(int parkingId,int userId)
+        public UnparkResponse UnParkVehicle(int parkingId,int userId)
         {
             try
             {

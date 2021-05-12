@@ -29,15 +29,10 @@ namespace ParkingLotMangamentSystem.Controllers.ParkingControllers
             {
                 int userId = TokenUserId();
                 parking.UserId = userId;
-                Parking parkdetails = this.parkingManager.ParkVehicle(parking);
+                var parkdetails = this.parkingManager.ParkVehicle(parking);
                 if (parkdetails != null)
-                {
-                    return this.Ok(new { status = "True", message = "Vehicle parked succesfully", data = parking });
-                }
-                else
-                {
-                    return this.BadRequest(new { status = "False", message = "Vehicle not parked", data = parkdetails });
-                }
+                    return this.Ok(new { status = "True", message = "Vehicle parked succesfully", data = parkdetails });
+                return this.BadRequest(new { status = "False", message = "Vehicle not parked", data = parkdetails });
             }
             catch (Exception)
             {
@@ -51,15 +46,10 @@ namespace ParkingLotMangamentSystem.Controllers.ParkingControllers
             try
             {
                 int userId = TokenUserId();
-                bool unparkDetails = this.parkingManager.UnParkVehicle(parkingId, userId);
-                if (unparkDetails)
-                {
+                var unparkDetails = this.parkingManager.UnParkVehicle(parkingId, userId);
+                if (unparkDetails!=null)
                     return this.Ok(new { status = "True", message = "Vehicle Unparked succesfully", data = unparkDetails });
-                }
-                else
-                {
-                    return this.BadRequest(new { status = "False", message = "Vehicle not Unparked", data = unparkDetails });
-                }
+                return this.BadRequest(new { status = "False", message = "Vehicle not Unparked", data = unparkDetails });
             }
             catch
             {

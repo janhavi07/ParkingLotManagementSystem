@@ -31,6 +31,7 @@ namespace ParkingLotRL.Repository
                 connection();
                 OracleCommand com = new OracleCommand("sp_deleteUnparkVehicle", this.oracleConnection);
                 com.CommandType = CommandType.StoredProcedure;
+                oracleConnection.Open();
                 int result = com.ExecuteNonQuery();
                 oracleConnection.Close();
                 if (result != 0)
@@ -48,20 +49,26 @@ namespace ParkingLotRL.Repository
             }
         }
 
-        public List<int> GetEmptySlots()
+        public List<Slot> GetEmptySlots()
         {
             try
             {
-                List<int> emptySlots = new List<int>();
+                List<Slot> emptySlots = new List<Slot>();
                 connection();
-                OracleCommand com = new OracleCommand("sp_getAllEmptySlots", this.oracleConnection);
+                OracleCommand com = new OracleCommand("sp_getSlots", this.oracleConnection);
                 com.CommandType = CommandType.StoredProcedure;
                 com.Parameters.Add("Cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+                oracleConnection.Open();
                 com.ExecuteNonQuery();
                 OracleDataReader reader = com.ExecuteReader();
+                if (!reader.HasRows) return null;
                 while (reader.Read())
                 {
-                    emptySlots.Add(reader.GetInt32(1));
+                    emptySlots.Add(
+                        new Slot
+                        {
+                            SlotNumber = reader.GetInt32(0)
+                        });
                 }
                 return emptySlots;
             }
@@ -75,7 +82,7 @@ namespace ParkingLotRL.Repository
             }
         }
 
-        public Parking ParkVehicle(Parking parking)
+        public ParkingResponse ParkVehicle(Parking parking)
         {
             try
             {
@@ -88,12 +95,16 @@ namespace ParkingLotRL.Repository
                 com.Parameters.Add("@user_id", parking.UserId);
                 com.Parameters.Add("@parking_slot", parking.ParkingSlot);
                 com.Parameters.Add("@is_disabled", parking.IsDisabled);
+                
                 oracleConnection.Open();
-                int rowAffected = com.ExecuteNonQuery();
+                int result = com.ExecuteNonQuery();
                 oracleConnection.Close();
-                if (rowAffected != 0) { return parking; }
-                else return null;
-
+                if (result != 0)
+                {
+                    return SearchVehicleByVehicleNumber(parking.VehicleNumber);
+                }
+                else
+                    return null;
             }
             catch (Exception e)
             {
@@ -115,21 +126,27 @@ namespace ParkingLotRL.Repository
                 com.CommandType = CommandType.StoredProcedure;
                 com.Parameters.Add("@vehicle_number", vehicleNumber);
                 com.Parameters.Add("Cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
+                oracleConnection.Open();
                 com.ExecuteNonQuery();
+                
                 OracleDataReader reader = com.ExecuteReader();
-                while (reader.Read())
+                if (reader.HasRows)
                 {
-                    parkingResponse.ParkingId= reader.GetInt32(0);
-                    parkingResponse.UserId = reader.GetInt32(1);
-                    parkingResponse.VehicleNumber = reader.GetString(2);
-                    parkingResponse.ParkingType = reader.GetString(3);
-                    parkingResponse.RoleType = reader.GetString(4);
-                    parkingResponse.NoOfWheels = reader.GetInt32(5);
-                    parkingResponse.UserEmail = reader.GetString(6);
-                    parkingResponse.EntryTime = reader.GetString(7);
-                    
+                    while (reader.Read())
+                    {
+                        parkingResponse.ParkingId = reader.GetInt32(0);
+                        parkingResponse.UserId = reader.GetInt32(1);
+                        parkingResponse.VehicleNumber = reader.GetString(2);
+                        parkingResponse.ParkingType = reader.GetString(3);
+                        parkingResponse.RoleType = reader.GetString(4);
+                        parkingResponse.NoOfWheels = reader.GetInt32(5);
+                        parkingResponse.UserEmail = reader.GetString(6);
+                        parkingResponse.EntryTime = reader.GetString(7);
+
+                    }
+                    return parkingResponse;
                 }
-                return parkingResponse;
+                else return null;
             }
             catch (Exception e)
             {
@@ -141,26 +158,34 @@ namespace ParkingLotRL.Repository
             }
         }
 
-        public bool UnParkVehicle(int parkingId, int userId)
+        public UnparkResponse UnParkVehicle(int parkingId, int userId)
         {
             try
             {
-                Parking parking = new Parking();
+                UnparkResponse unpark = new UnparkResponse();
                 connection();
                 OracleCommand com = new OracleCommand("sp_UnparkVehicle", this.oracleConnection);
                 com.CommandType = CommandType.StoredProcedure;
                 com.Parameters.Add("@parking_number", parkingId);
                 com.Parameters.Add("@user_id", userId);
+                com.Parameters.Add("Cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
                 oracleConnection.Open();
-                int rowAffected = com.ExecuteNonQuery();
-                if (rowAffected != 0)
-                    return true;
-                else
-                    return false;
+                OracleDataReader reader = com.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        unpark.VehicleNumber = reader.GetString(0);
+                        unpark.ParkedSlot = reader.GetInt32(1);
+                        unpark.ExitTime = reader.GetString(2);
+                    }
+                    return unpark;
+                }
+                else return null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw new Exception(message: "Incorrect user_id");
+                throw new Exception(e.Message);
             }
             finally
             {
@@ -174,7 +199,7 @@ namespace ParkingLotRL.Repository
             {
                 connection();
                 List<ParkingResponse> parkingList = new List<ParkingResponse>();
-                OracleCommand com = new OracleCommand("sp_UnparkVehicle", this.oracleConnection);
+                OracleCommand com = new OracleCommand("sp_getAllParkedVehicles", this.oracleConnection);
                 com.CommandType = CommandType.StoredProcedure;
                 com.Parameters.Add("Cursor", OracleDbType.RefCursor).Direction = ParameterDirection.Output;
                 OracleDataAdapter adapter = new OracleDataAdapter(com);
@@ -182,6 +207,8 @@ namespace ParkingLotRL.Repository
                 oracleConnection.Open();
                 adapter.Fill(table);
                 oracleConnection.Close();
+                if (table.Rows.Count.Equals(0))
+                    return null;
                 foreach (DataRow row in table.Rows)
                 {
                     parkingList.Add(
