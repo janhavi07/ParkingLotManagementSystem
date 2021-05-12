@@ -1,0 +1,16 @@
+--------------------------------------------------------
+--  File created - Thursday-May-13-2021   
+--------------------------------------------------------
+--------------------------------------------------------
+--  DDL for Procedure SP_GETSLOTS
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "PARKINGLOT"."SP_GETSLOTS" (cs out SYS_REFCURSOR)
+is
+begin
+open cs for
+select parking_slots from parkingtable where is_disabled='F';
+end;
+
+/
